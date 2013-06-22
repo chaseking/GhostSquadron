@@ -1,0 +1,6 @@
+metrics:
+  enabled: true
+game:
+  blood-effect:
+    enabled: true
+    block-id: 11

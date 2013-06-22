@@ -1,0 +1,7 @@
+name: GhostSquadron
+main: com.chasechocolate.ghostsquadron.GhostSquadron
+version: 06.13.13
+commands:
+  ghostsquadron:
+    usage: /ghostsquadron <command> [args]
+    description: Main GhostSquadron command.
