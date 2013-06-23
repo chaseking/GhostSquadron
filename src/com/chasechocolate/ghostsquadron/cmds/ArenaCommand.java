@@ -55,7 +55,6 @@ public class ArenaCommand extends GhostSquadronCommand {
 										Arena arena = new Arena(args[2], map);
 										
 										map.setArena(arena);
-										arena.startCountdown();
 										ArenaUtils.addArena(arena);
 										ArenaUtils.loadArenas();
 										

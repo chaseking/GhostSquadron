@@ -5,16 +5,9 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Effect;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
-import org.bukkit.util.Vector;
 
 import com.chasechocolate.ghostsquadron.GhostSquadron;
 import com.chasechocolate.ghostsquadron.game.GameQueue;
@@ -61,7 +54,7 @@ public class Arena {
 		this.name = name;
 		this.map = map;
 		this.queue = new GameQueue(this);
-		this.status = GameStatus.COUNTDOWN;
+		this.status = GameStatus.WAITING;
 		
 		if(this.map.getConfigFile().exists()){
 			this.map.getConfig().set("arena", this.name);
@@ -73,7 +66,11 @@ public class Arena {
 	public void startCountdown(){
 		this.status = GameStatus.COUNTDOWN;
 		
-		this.startCountdown = new ArenaStartCountdown(this, 120);
+		if(startCountdown != null){
+			startCountdown.getTask().cancel();
+		}
+		
+		this.startCountdown = new ArenaStartCountdown(this, 30);
 		this.startCountdown.startStartCountdown();
 	}
 	
@@ -124,25 +121,6 @@ public class Arena {
 				
 				kit.applyKit(player);
 				player.addPotionEffect(Localization.INVISIBILITY);
-				
-				player.getInventory().addItem(new ItemStack(Material.FIREWORK));
-				
-				Bukkit.getPluginManager().registerEvents(new Listener(){
-					@EventHandler
-					public void onPlayerInteract(PlayerInteractEvent event){
-						Player player = event.getPlayer();
-						ItemStack hand = player.getItemInHand();						
-						
-						if(hand.getType() == Material.FIREWORK){
-							event.setCancelled(false);
-							player.setVelocity(new Vector(0.0D, 0.0D, 0.0D));
-							
-							Vector direction = player.getLocation().getDirection();
-							player.setVelocity(direction.divide(new Vector(1.1D, 1.1D, 1.1D)).setY(0.95D));
-							player.getWorld().playEffect(player.getLocation(), Effect.SMOKE, 3);
-						}
-					}
-				}, GhostSquadron.getInstance());
 			}
 			
 			//Inform all players that the game has started, and tell them which map and how many players are playing
@@ -153,7 +131,10 @@ public class Arena {
 			this.endCountdown.startEndCountdown();
 		} else {
 			broadcastMessage(ChatColor.RED + "Failed to start the game, there must be at least " + MIN + " players in the queue! Restarting countdown!");
-			startCountdown();
+			
+			if(queue.getAllInQueue().size() >= MIN){
+				startCountdown();
+			}
 		}
 	}
 	
@@ -161,7 +142,7 @@ public class Arena {
 		this.status = GameStatus.ENDING;
 		
 		if(force){
-			broadcastMessage(ChatColor.BOLD + "" + ChatColor.RED + "The game has been force ended!");
+			broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "The game has been force ended!");
 		}
 		
 		int redScore = onRed.size();
@@ -188,12 +169,14 @@ public class Arena {
 		allPlayers.clear();
 		onRed.clear();
 		onBlue.clear();
-		startCountdown();
+		
+		if(queue.getAllInQueue().size() >= MIN){
+			startCountdown();
+		}
 	}
 	
 	public void restart(){
 		end(false);
-		startCountdown();
 	}
 	
 	public String getName(){
@@ -229,10 +212,8 @@ public class Arena {
 		int blueSize = onBlue.size();
 		
 		if(redSize == 0){
-			broadcastMessage(ChatColor.YELLOW + "The " + TeamColor.BLUE.toChatColor() + "blue" + ChatColor.YELLOW + " team has won!");
 			restart();
 		} else if(blueSize == 0){
-			broadcastMessage(ChatColor.YELLOW + "The " + TeamColor.RED.toChatColor() + "red" + ChatColor.YELLOW + " team has won!");
 			restart();
 		}
 	}
@@ -240,22 +221,18 @@ public class Arena {
 	public void addPlayer(Player player){
 		if(!(isPlaying(player))){
 			if(status == GameStatus.INGAME){
-				allPlayers.add(player.getName());
-				
-				TeamColor team = GameUtils.getRandomTeamColor(this);
-				
-				if(team == TeamColor.RED){
-					onRed.add(player.getName());
-				} else if(team == TeamColor.BLUE){
-					onBlue.add(player.getName());
-				}
+				PlayerUtils.sendMessage(player, ChatColor.RED + "This arena is already running!");
 			} else {
 				if(!(queue.isInQueue(player))){
 					queue.addToQueue(player);
-					PlayerUtils.sendMessage(player, ChatColor.GREEN + "You have been added to the queue of this arena! You will be teleported when the game starts!");					
+					PlayerUtils.sendMessage(player, ChatColor.GREEN + "You have been added to the queue of this arena! You will be teleported when the game starts!");
+					Bukkit.broadcastMessage(queue.getAllInQueue().size() + "/" + MIN);
+					if(queue.getAllInQueue().size() >= MIN){
+						startCountdown();
+					}
 				} else {
 					PlayerUtils.sendMessage(player, ChatColor.RED + "You are already in the game queue!");
-				}
+				}			
 			}
 		} else {
 			PlayerUtils.sendMessage(player, ChatColor.RED + "You are already playing in the arena!");
@@ -268,6 +245,10 @@ public class Arena {
 			PlayerUtils.wipe(player);
 			player.setScoreboard(ScoreboardTools.getBlankScoreboard());
 			player.teleport(LocationUtils.getLobbyLoc());
+		}
+		
+		if(queue.isInQueue(player)){
+			queue.removeFromQueue(player);
 		}
 		
 		if(onRed.contains(player.getName())){

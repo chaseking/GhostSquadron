@@ -97,10 +97,6 @@ public class GhostSquadron extends JavaPlugin {
 		log("Loaded " + MapUtils.getBaseMapsFile().listFiles().length + " maps!");
 		log("Loaded " + ArenaUtils.getAllArenas().size() + " arenas!");
 		
-		for(Arena arena : ArenaUtils.getAllArenas()){
-			arena.startCountdown();
-		}
-		
 		commandHelp.put(1, "/ghostsquadron join <arena> - Join an arena with the specified name.");
 		//TODO more help messages
 		
