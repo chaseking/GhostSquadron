@@ -1,6 +1,6 @@
 package com.chasechocolate.ghostsquadron.listeners;
 
-import net.minecraft.server.v1_5_R3.Packet205ClientCommand;
+import net.minecraft.server.v1_6_R2.Packet205ClientCommand;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.EntityType;

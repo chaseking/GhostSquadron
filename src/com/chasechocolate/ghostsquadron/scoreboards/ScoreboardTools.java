@@ -47,12 +47,12 @@ public class ScoreboardTools {
 			objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 			objective.setDisplayName(ChatColor.GREEN + "Ghost Squadron");
 			
-			red.setAllowFriendlyFire(true); //Minecraft bug!
+			red.setAllowFriendlyFire(false);
 			red.setCanSeeFriendlyInvisibles(true);
 			red.setPrefix(ChatColor.DARK_RED + "[Red] ");
 			red.setSuffix(ChatColor.RESET + "");
 			
-			blue.setAllowFriendlyFire(true); //Minecraft bug!
+			blue.setAllowFriendlyFire(false);
 			blue.setCanSeeFriendlyInvisibles(true);
 			blue.setPrefix(ChatColor.BLUE + "[Blue] ");
 			blue.setSuffix(ChatColor.RESET + "");
